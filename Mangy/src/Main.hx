@@ -32,8 +32,13 @@ class Main
 	static inline var explore_s:String = "e"; 
 	static inline var list:String      = "list"; 
 	static inline var list_s:String    = "l"; 
-	static inline var run:String      = "run"; 
-	static inline var run_s:String    = "r"; 
+	static inline var run:String       = "run"; 
+	static inline var run_s:String     = "r"; 
+	static inline var delete:String    = "delete"; 
+	static inline var delete_s:String  = "d"; 
+	
+	static inline var propsFile:String = "props.mangy";
+	static inline var logFile:String   = "log.txt";
 	
 	static var props:PropertySet;
 	
@@ -42,21 +47,27 @@ class Main
 		var props:PropertySet = {
 			propsArr : new Array()
 		}	
-		if(FileSystem.exists(getFilePath())){
-			var contents:String = File.getContent(getFilePath());
-			var rawProps:Dynamic = Json.parse(contents);
-			for (i in 0...rawProps.propsArr.length) {
-				var p:Property = {
-					name : rawProps.propsArr[i].name.toString(),
-					value: rawProps.propsArr[i].value.toString()
+		if(FileSystem.exists(getFilePath(propsFile))){
+			var contents:String = File.getContent(getFilePath(propsFile));
+			if(contents.length > 0){
+				var rawProps:Dynamic = Json.parse(contents);
+				for (i in 0...rawProps.propsArr.length) {
+					var p:Property = {
+						name : rawProps.propsArr[i].name.toString(),
+						value: rawProps.propsArr[i].value.toString()
+					}
+					props.propsArr.push(p);
 				}
-				props.propsArr.push(p);
 			}
 		}else{
-			var file:FileOutput = File.write(getFilePath(), false);
+			var file:FileOutput = File.write(getFilePath(propsFile), false);
 			file.writeString("");
 			file.close();
 		}
+		
+		//Clear log
+		log("", true);
+		
 		var args:Array<String>;
 		args = Sys.args();
 		Sys.println(args.toString());
@@ -90,9 +101,7 @@ class Main
 						if (!exists) {
 							props.propsArr.push(prop);
 						}
-						var file:FileOutput = File.write(getFilePath(), false);
-						file.writeString(Json.stringify(props));
-						file.close();
+						writeProps(props);
 					}
 				case explore | explore_s:
 					if (args.length > 1) {
@@ -109,11 +118,11 @@ class Main
 					}
 					
 				case list | list_s:
-					var out:String = "Items = ";
+					var out:String = "\n__________Items___________\n";
 					for (p in props.propsArr) {
-						out += p.name + " : " + p.value + ", ";
+						out += p.name + " : " + p.value + "\n";
 					}
-					Sys.print("echo " + out);
+					log(out);
 					
 				case run | run_s:
 					if (args.length > 1){
@@ -128,19 +137,54 @@ class Main
 							Sys.command(out);
 						}
 					}
+					
+				case delete | delete_s:
+					if (args.length > 1) {
+						var pr:Property = null;
+						for (p in props.propsArr) {
+							if (p.name == args[1].toString()) {
+								pr = p;
+								break;
+							}
+						}
+						if (pr != null) {
+							props.propsArr.remove(pr);
+							log("Removed " + args[1] + "\n");
+							writeProps(props);
+						}
+					}
 			}
 		}else {
 			Sys.println("Argument expected.");
 		}
 	}
 	
-	static function getFilePath():String{
-		var split = Sys.executablePath().split("/");
+	static function getFilePath(file:String):String{
+		var split = Sys.executablePath().split("\\");
 		var path:String = "";
 		for (s in 0...split.length - 1) {
-			path += s + "/";
+			path += split[s] + "\\";
 		}
-		path += "props.mangy";
+		path += file;
 		return path;
+	}
+	
+	static function log(content:String, clear:Bool = false) {		
+		var file:FileOutput = null;
+		if(clear){
+			file = File.write(getFilePath(logFile), false);
+		}else {
+			file = File.append(getFilePath(logFile), false);
+		}
+		file.writeString(content);
+		file.close();
+	}
+	
+	static function writeProps(props:PropertySet) {
+		if(props != null){
+			var file:FileOutput = File.write(getFilePath(propsFile), false);
+			file.writeString(Json.stringify(props));
+			file.close();
+		}
 	}
 }
