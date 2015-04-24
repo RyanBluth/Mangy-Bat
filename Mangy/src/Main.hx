@@ -36,6 +36,8 @@ class Main
 	static inline var run_s:String     = "r"; 
 	static inline var delete:String    = "delete"; 
 	static inline var delete_s:String  = "d"; 
+	static inline var pipe:String      = "pipe";
+	static inline var pipe_s:String    = "p";
 	
 	static inline var propsFile:String = "props.mangy";
 	static inline var logFile:String   = "log.txt";
@@ -134,7 +136,7 @@ class Main
 							}
 						}
 						if (out != null) {
-							Sys.command(out);
+							Sys.command("\"" + out + "\"");
 						}
 					}
 					
@@ -151,6 +153,20 @@ class Main
 							props.propsArr.remove(pr);
 							log("Removed " + args[1] + "\n");
 							writeProps(props);
+						}
+					}
+					
+				case pipe | pipe_s:
+					if (args.length > 1) {
+						var prop:Property = null;
+						for (p in props.propsArr) {
+							if (p.name == args[1]) {
+								prop = p;
+								break;
+							}
+						}
+						if (prop != null) {
+							log(prop.value);
 						}
 					}
 			}
