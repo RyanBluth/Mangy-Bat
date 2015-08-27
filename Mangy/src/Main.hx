@@ -24,20 +24,22 @@ typedef Property = {
  
 class Main 
 {
-	static inline var go:String        = "go";
-	static inline var go_s:String      = "g";
-	static inline var set:String       = "s"; 
-	static inline var set_s:String     = "set"; 
-	static inline var explore:String   = "explore"; 
-	static inline var explore_s:String = "e"; 
-	static inline var list:String      = "list"; 
-	static inline var list_s:String    = "l"; 
-	static inline var run:String       = "run"; 
-	static inline var run_s:String     = "r"; 
-	static inline var delete:String    = "delete"; 
-	static inline var delete_s:String  = "d"; 
-	static inline var pipe:String      = "pipe";
-	static inline var pipe_s:String    = "p";
+	static inline var go:String         = "go";
+	static inline var go_s:String       = "g";
+	static inline var set:String        = "s"; 
+	static inline var set_s:String      = "set"; 
+	static inline var explore:String    = "explore"; 
+	static inline var explore_s:String  = "e"; 
+	static inline var list:String       = "list"; 
+	static inline var list_s:String     = "l"; 
+	static inline var run:String        = "run"; 
+	static inline var run_s:String      = "r"; 
+	static inline var delete:String     = "delete"; 
+	static inline var delete_s:String   = "d"; 
+	static inline var pipe:String       = "pipe";
+	static inline var pipe_s:String     = "p"; 
+	static inline var runChain:String   = "run_chain";
+	static inline var runChain_s:String = "rc";
 	
 	static inline var propsFile:String = "props.mangy";
 	static inline var logFile:String   = "log.txt";
@@ -129,13 +131,23 @@ class Main
 				case run | run_s:
 					if (args.length > 1){
 						var out:String = null;
+						var prop = null;
 						for (p in props.propsArr) {
 							if (p.name == args[1].toString()) {
 								out = p.value;
+								prop = p;
 								break;
 							}
 						}
+						
 						if (out != null) {
+							for (c in 0...out.length) {
+								if (out.charAt(c) == ',') {
+									log(prop.name + " appears to be a chain command, chain commands must be run using run_chain or rc\n");
+									break;
+								}
+							}
+							log("Running... " + out + "\n");
 							Sys.command("\"" + out + "\"");
 						}
 					}
@@ -168,6 +180,29 @@ class Main
 						if (prop != null) {
 							log(prop.value);
 						}
+					}
+				case runChain | runChain_s:
+					if (args.length > 1) {
+						var out:String = null;
+						
+						for (p in props.propsArr) {
+							if (p.name == args[1].toString()) {
+								out = p.value;
+								break;
+							}
+						}
+						
+						var vals:Array<String> = out.split(",");
+						
+						for (val in vals) {
+							val = StringTools.trim(val);
+							if (val != null) {
+								log("Running... " + val + "\n");
+								Sys.command("\"" + val + "\"");
+							}
+						}
+					}else {
+						log("Invalid number of arguments\n");
 					}
 			}
 		}else {
