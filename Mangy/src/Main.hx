@@ -395,40 +395,38 @@ class Main
 	 * @return The expanded value
 	 */
 	static function expandPropertyArg(arg:String):String {
-		if (arg != null && arg.length > 2) {
-			if (contains(arg, "{") && contains(arg, "}")) {
-				var valOne = null;
-				if (StringTools.startsWith(arg, "{")) {
-					valOne = arg.substring(1, arg.length);
-				}else {
-					valOne = arg.split("{")[1];
-				}
-				
-				var matched:Bool = false;
-				
-				if (valOne != null) {
-					var val = null;
-					if (StringTools.endsWith(arg, "}")) {
-						val = valOne.substring(0, valOne.length - 1);
-					}else {
-						val = valOne.split("}")[0];
-					}
-					if (val != null) {
+		var outArg:String = "";
+		if (arg != null) {
+			var vars:Array<String> = arg.split("{");
+			for (va in vars) {
+				if (contains(va, "}")) {
+					var vas = va.split("}");
+					va = vas[0];
+					var matched:Bool = false;
+					if (va != null) {
 						for (p in props.propsArr) {
-							if (p != null && p.name == val) {
-								arg = p.value;
+							if (p != null && p.name == va) {
+								outArg += p.value;
 								matched = true;
 								break;
 							}
 						}
 					}
-					logLine("VAL " + val);
-				}
-				if (!matched) {
-					logLine("Could not expand " + arg);
+					for (i in 1...vas.length) {
+						outArg += vas[i];
+					}
+					if (!matched) {
+						logLine("Could not expand " + arg);
+					}
+				}else {
+					outArg += va;
 				}
 			}
 		}
-		return arg;
+		if (outArg.length > 0) {
+			return outArg;
+		}else{
+			return arg;
+		}
 	}
 }
