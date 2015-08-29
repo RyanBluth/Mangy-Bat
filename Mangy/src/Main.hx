@@ -22,15 +22,10 @@ typedef Property = {
 	var value:String;
 }
 
-typedef DashArg = {
-	var key:String;
-	var value:String;
-}
-
 typedef Command = {
 	var command:String;
 	var args:Array<String>;
-	var dashArgs:Array<DashArg>;
+	var dashArgs:Map<String, String>;
 }
  
 class Main 
@@ -57,6 +52,8 @@ class Main
 	
 	static var props:PropertySet;
 	
+	static var globalCommand:Command;
+	
 	static function main() 
 	{
 		props = {
@@ -80,10 +77,10 @@ class Main
 			file.close();
 		}
 		
+		globalCommand = processMangyArguments(Sys.args());
+		
 		//Clear log
 		log("", true);
-		
-		logLine(Std.string(processMangyArguments()));
 		
 		var args:Array<String>;
 		args = Sys.args();
@@ -234,6 +231,10 @@ class Main
 							var command = processCommandArguments(val);
 							
 							if (command != null) { 
+								if (globalCommand.dashArgs.exists("fr")) {
+									Sys.setCwd(globalCommand.dashArgs.get("fr"));
+								}
+								
 								log("Running... " + command.command + " with arguments " + command.args.toString() + " from " + Sys.getCwd() + "\n");
 								Sys.command(command.command, command.args);
 							}
@@ -320,12 +321,11 @@ class Main
 	}
 	
 	// Processes the argumetns passed into the system
-	static function processMangyArguments():Command {
-		var args = Sys.args();
+	static function processMangyArguments(args:Array<String>):Command {
 		var command:Command = {
 			command  : args[0],
 			args     : [],
-			dashArgs : []
+			dashArgs : new Map<String, String>()
  		}
 		
 		var idx = 1;
@@ -348,20 +348,15 @@ class Main
 					value = StringTools.replace(value, "'", "");
 					value = StringTools.replace(value, '"', "");
 					
-					command.dashArgs.push({
-						key   : key,
-						value : expandPropertyArg(value)
-					});
+					command.dashArgs.set(key, expandPropertyArg(value));
 				}
-			}else if(StringTools.startsWith(arg, "-")){
+			}
+			if(StringTools.startsWith(arg, "-")){
 				var key = StringTools.replace(arg, "-", "");
 				if(idx + 1 < args.length){
 					idx++;
 					var value = args[idx];
-					command.dashArgs.push({
-						key   : key,
-						value : expandPropertyArg(value)
-					});
+					command.dashArgs.set(key, expandPropertyArg(value));
 				}
 			}else {
 				command.args.push(expandPropertyArg(arg));
@@ -429,4 +424,24 @@ class Main
 			return arg;
 		}
 	}
+	
+	static function commandToArrayArgs(command:Command):Array<String> {
+		var args:Array<String> = [];
+		if(command.command != null){
+			args.push(command.command);
+		}
+		if(command.args != null){
+			for (x in command.args) {
+				args.push(x);
+			}
+		}
+		if(command.dashArgs != null){
+			for (x in command.dashArgs.keys()) {
+				args.push("-" + x);
+				args.push(command.dashArgs.get(x));
+			}
+		}
+		return args;
+	}
+	
 }
