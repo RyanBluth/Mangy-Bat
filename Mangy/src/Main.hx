@@ -443,6 +443,12 @@ class Main
 		}
 	}
 	
+	/**
+	 * Converts a command object back into an array of arguments 
+	 * 
+	 * @param	command The command object to convert
+	 * @return The converted array
+	 */
 	static function commandToArrayArgs(command:Command):Array<String> {
 		var args:Array<String> = [];
 		if(command.command != null){
