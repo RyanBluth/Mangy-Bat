@@ -234,6 +234,7 @@ class Main
 							for (x in 0...command.args.length) {
 								for (i in 0...globalCommand.extras.length) {
 									command.args[x] = StringTools.replace(command.args[x], "$" + Std.string(i + 1), globalCommand.extras[i]);
+									command.args[x] = StringTools.replace(command.args[x], "'", "");
 								}
 							}
 							
@@ -243,7 +244,7 @@ class Main
 								}
 								
 								log("Running... " + command.command + " with arguments " + command.args.toString() + " from " + Sys.getCwd() + "\n");
-								logLine(Sys.command(command.command, command.args));
+								Sys.command(command.command, command.args);
 							}
 						}
 					}else {
