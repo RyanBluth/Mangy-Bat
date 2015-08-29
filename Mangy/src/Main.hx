@@ -345,7 +345,7 @@ class Main
 			if (extraIdx >= 0) {
 				command.extras.push(args[i]);
 			}
-			if (extraIdx == -1 && args[i] == "$") {
+			if (extraIdx == -1 && args[i] == "--") {
 				extraIdx = i;
 			}
 		}
