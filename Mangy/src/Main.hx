@@ -21,6 +21,17 @@ typedef Property = {
 	var name:String;
 	var value:String;
 }
+
+typedef DashArg = {
+	var key:String;
+	var value:String;
+}
+
+typedef Command = {
+	var command:String;
+	var args:Array<String>;
+	var dashArgs:Array<DashArg>;
+}
  
 class Main 
 {
@@ -36,8 +47,8 @@ class Main
 	static inline var run_s:String      = "r"; 
 	static inline var delete:String     = "delete"; 
 	static inline var delete_s:String   = "d"; 
-	static inline var pipe:String       = "pipe";
-	static inline var pipe_s:String     = "p"; 
+	static inline var path:String       = "path";
+	static inline var path_s:String     = "p"; 
 	static inline var runChain:String   = "run_chain";
 	static inline var runChain_s:String = "rc";
 	
@@ -48,7 +59,7 @@ class Main
 	
 	static function main() 
 	{
-		var props:PropertySet = {
+		props = {
 			propsArr : new Array()
 		}	
 		if(FileSystem.exists(getFilePath(propsFile))){
@@ -72,9 +83,10 @@ class Main
 		//Clear log
 		log("", true);
 		
+		logLine(Std.string(processMangyArguments()));
+		
 		var args:Array<String>;
 		args = Sys.args();
-		Sys.println(args.toString());
 		if (args.length > 0) {
 			switch(args[0]){
 				case go | go_s:
@@ -129,7 +141,7 @@ class Main
 					log(out);
 					
 				case run | run_s:
-					if (args.length > 1){
+					if (args.length > 1) {
 						var out:String = null;
 						var prop = null;
 						for (p in props.propsArr) {
@@ -147,8 +159,11 @@ class Main
 									break;
 								}
 							}
-							log("Running... " + out + "\n");
-							Sys.command("\"" + out + "\"");
+							
+							var command = processCommandArguments(out);
+							
+							log("Running... " + command.command + " with arguments " + command.args.toString() + " from " + Sys.getCwd() + "\n");
+							Sys.command(command.command, command.args);
 						}
 					}
 					
@@ -168,19 +183,39 @@ class Main
 						}
 					}
 					
-				case pipe | pipe_s:
+				case path | path_s:
 					if (args.length > 1) {
-						var prop:Property = null;
-						for (p in props.propsArr) {
-							if (p.name == args[1]) {
-								prop = p;
-								break;
+						var value:String = null;
+						for (arg in args) {
+							if (arg == "-p" || arg == "-property") {
+								for (p in props.propsArr) {
+									if (p.name == args[1]) {
+										value = p.value;
+										break;
+									}
+								}	
 							}
 						}
-						if (prop != null) {
-							log(prop.value);
+						
+						if (value == null) {
+							value = args[1];
 						}
+						
+						var path:String = Sys.getEnv("PATH");
+
+						if (path != null) {
+							Sys.command("setx path \"%PATH%;" + value + " /m"); 
+							Sys.command("path=%PATH%;" + value); 
+						}
+						
+						log(Sys.getEnv("PATH") + "\n");
 					}
+					
+				/**
+				 * Possible Arguments 
+				 * 
+				 * -fr = Which directoty to run from
+				 */	
 				case runChain | runChain_s:
 					if (args.length > 1) {
 						var out:String = null;
@@ -195,10 +230,12 @@ class Main
 						var vals:Array<String> = out.split(",");
 						
 						for (val in vals) {
-							val = StringTools.trim(val);
-							if (val != null) {
-								log("Running... " + val + "\n");
-								Sys.command("\"" + val + "\"");
+							
+							var command = processCommandArguments(val);
+							
+							if (command != null) { 
+								log("Running... " + command.command + " with arguments " + command.args.toString() + " from " + Sys.getCwd() + "\n");
+								Sys.command(command.command, command.args);
 							}
 						}
 					}else {
@@ -231,11 +268,167 @@ class Main
 		file.close();
 	}
 	
+	static function logLine(content:String, clear:Bool = false) {
+		log(content + "\n", clear);
+	}
+	
 	static function writeProps(props:PropertySet) {
 		if(props != null){
 			var file:FileOutput = File.write(getFilePath(propsFile), false);
 			file.writeString(Json.stringify(props));
 			file.close();
 		}
+	}
+	
+	
+	// Splits a command with arguments into an array
+	static function processCommandArguments(command:String):Command {
+		
+		command = StringTools.trim(command);
+		
+		var quote:String = '';
+		var args:Array<String> = [];
+		var currentValue = "";
+		
+		for (c in 0...command.length) {
+			if (command.charAt(c) == "'" || command.charAt(c) == '"') {
+				if (quote == command.charAt(c)) {
+					quote = '';
+				}else {
+					quote = command.charAt(c);
+				}
+			}
+			
+			if ((command.charAt(c) == ' ' && quote == '')) {
+				args.push(currentValue);
+				currentValue = "";
+			}else if (c == command.length - 1) {
+				currentValue += command.charAt(c);
+				args.push(currentValue);
+			}else {
+				currentValue += command.charAt(c);
+			}
+		}
+		
+		var com:Command = {
+			command  : args.shift(),
+			args     : args,
+			dashArgs : null
+		}
+		
+		return com;
+	}
+	
+	// Processes the argumetns passed into the system
+	static function processMangyArguments():Command {
+		var args = Sys.args();
+		var command:Command = {
+			command  : args[0],
+			args     : [],
+			dashArgs : []
+ 		}
+		
+		var idx = 1;
+		
+		while (idx < args.length) {
+			
+			var arg = args[idx];
+			
+			if (StringTools.startsWith(arg, "-") && (contains(arg, "'") || contains(arg, '"'))) {
+				var keyVal:Array<String> = null;
+				if (contains(arg, "'")) {
+					keyVal = arg.split("'");
+				}else if (contains(arg, '"')) {
+					keyVal = arg.split('"');
+				}
+				if(keyVal != null && keyVal.length > 1){
+					var key = keyVal[0];
+					var value = keyVal[1];
+					key   = StringTools.replace(key, "-", "");
+					value = StringTools.replace(value, "'", "");
+					value = StringTools.replace(value, '"', "");
+					
+					command.dashArgs.push({
+						key   : key,
+						value : expandPropertyArg(value)
+					});
+				}
+			}else if(StringTools.startsWith(arg, "-")){
+				var key = StringTools.replace(arg, "-", "");
+				if(idx + 1 < args.length){
+					idx++;
+					var value = args[idx];
+					command.dashArgs.push({
+						key   : key,
+						value : expandPropertyArg(value)
+					});
+				}
+			}else {
+				command.args.push(expandPropertyArg(arg));
+			}
+			
+			idx++;
+		}
+		return command;
+	}
+	
+	static function contains(string:String, match:String):Bool {
+		var count = 0;
+		for (c in 0...string.length) {
+			if (string.charAt(c) == match.charAt(count)) {
+				count++;
+			}else {
+				count = 0;
+			}
+			if (count == match.length) {
+				return true;
+			}
+		}
+		return false;
+	}
+
+	/**
+	 * Attempts to expand a propery argument
+	 * If it fails then it just returns the argument and logs a message
+	 * 
+	 * @param arg  The argument to expand 
+	 * @return The expanded value
+	 */
+	static function expandPropertyArg(arg:String):String {
+		if (arg != null && arg.length > 2) {
+			if (contains(arg, "{") && contains(arg, "}")) {
+				var valOne = null;
+				if (StringTools.startsWith(arg, "{")) {
+					valOne = arg.substring(1, arg.length);
+				}else {
+					valOne = arg.split("{")[1];
+				}
+				
+				var matched:Bool = false;
+				
+				if (valOne != null) {
+					var val = null;
+					if (StringTools.endsWith(arg, "}")) {
+						val = valOne.substring(0, valOne.length - 1);
+					}else {
+						val = valOne.split("}")[0];
+					}
+					if (val != null) {
+						for (p in props.propsArr) {
+							if (p != null && p.name == val) {
+								arg = p.value;
+								matched = true;
+								break;
+							}
+						}
+					}
+					logLine("VAL " + val);
+				}
+				if (!matched) {
+					logLine("Could not expand " + arg);
+				}
+			}
+		}
+		return arg;
 	}
 }

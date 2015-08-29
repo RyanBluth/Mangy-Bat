@@ -2,6 +2,6 @@
 if %1 == debug (
 	bin\Main-debug.exe
 ) else (
-	bin\Main.exe 
+	copy bin\Main.exe C:\tools\mangy\Main.exe /Y
 )
 pause
