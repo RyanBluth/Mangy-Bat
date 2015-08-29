@@ -243,7 +243,7 @@ class Main
 								}
 								
 								log("Running... " + command.command + " with arguments " + command.args.toString() + " from " + Sys.getCwd() + "\n");
-								Sys.command(command.command, command.args);
+								logLine(Sys.command(command.command, command.args));
 							}
 						}
 					}else {
