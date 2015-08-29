@@ -26,6 +26,7 @@ typedef Command = {
 	var command:String;
 	var args:Array<String>;
 	var dashArgs:Map<String, String>;
+	var extras:Array<String>;
 }
  
 class Main 
@@ -44,8 +45,8 @@ class Main
 	static inline var delete_s:String   = "d"; 
 	static inline var path:String       = "path";
 	static inline var path_s:String     = "p"; 
-	static inline var runChain:String   = "run_chain";
-	static inline var runChain_s:String = "rc";
+	static inline var runChain:String   = "chain";
+	static inline var runChain_s:String = "c";
 	
 	static inline var propsFile:String = "props.mangy";
 	static inline var logFile:String   = "log.txt";
@@ -230,6 +231,12 @@ class Main
 							
 							var command = processCommandArguments(val);
 							
+							for (x in 0...command.args.length) {
+								for (i in 0...globalCommand.extras.length) {
+									command.args[x] = StringTools.replace(command.args[x], "$" + Std.string(i + 1), globalCommand.extras[i]);
+								}
+							}
+							
 							if (command != null) { 
 								if (globalCommand.dashArgs.exists("fr")) {
 									Sys.setCwd(globalCommand.dashArgs.get("fr"));
@@ -314,7 +321,8 @@ class Main
 		var com:Command = {
 			command  : args.shift(),
 			args     : args,
-			dashArgs : null
+			dashArgs : new Map<String, String>(),
+			extras   : []
 		}
 		
 		return com;
@@ -325,15 +333,25 @@ class Main
 		var command:Command = {
 			command  : args[0],
 			args     : [],
-			dashArgs : new Map<String, String>()
+			dashArgs : new Map<String, String>(),
+			extras   : []
  		}
 		
 		var idx = 1;
+	
+		var extraIdx:Int = -1;
 		
-		while (idx < args.length) {
-			
+		for (i in 0...args.length) {
+			if (extraIdx >= 0) {
+				command.extras.push(args[i]);
+			}
+			if (extraIdx == -1 && args[i] == "$") {
+				extraIdx = i;
+			}
+		}
+		
+		while (idx < (extraIdx >= 0 ? extraIdx : args.length)) {
 			var arg = args[idx];
-			
 			if (StringTools.startsWith(arg, "-") && (contains(arg, "'") || contains(arg, '"'))) {
 				var keyVal:Array<String> = null;
 				if (contains(arg, "'")) {
@@ -443,5 +461,4 @@ class Main
 		}
 		return args;
 	}
-	
 }
