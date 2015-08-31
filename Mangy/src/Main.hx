@@ -233,7 +233,7 @@ class Main
 							
 							for (x in 0...command.args.length) {
 								for (i in 0...globalCommand.extras.length) {
-									command.args[x] = StringTools.replace(command.args[x], "$" + Std.string(i + 1), globalCommand.extras[i]);
+									command.args[x] = StringTools.replace(command.args[x], "$" + Std.string(i + 1), expandPropertyArg(globalCommand.extras[i]));
 								}
 							}
 							
@@ -343,7 +343,7 @@ class Main
 		
 		for (i in 0...args.length) {
 			if (extraIdx >= 0) {
-				command.extras.push(args[i]);
+				command.extras.push(expandPropertyArg(args[i]));
 			}
 			if (extraIdx == -1 && args[i] == "--") {
 				extraIdx = i;
