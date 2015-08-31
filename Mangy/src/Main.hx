@@ -86,6 +86,12 @@ class Main
 		var args:Array<String>;
 		args = Sys.args();
 		if (args.length > 0) {
+			
+			// fr argument sets the directory to run the command from
+			if (globalCommand.dashArgs.exists("fr")) {
+				Sys.setCwd(globalCommand.dashArgs.get("fr"));
+			}
+			
 			switch(args[0]){
 				case go | go_s:
 					if (args.length > 1) {
@@ -238,10 +244,6 @@ class Main
 							}
 							
 							if (command != null) { 
-								if (globalCommand.dashArgs.exists("fr")) {
-									Sys.setCwd(globalCommand.dashArgs.get("fr"));
-								}
-								
 								log("Running... " + command.command + " with arguments " + command.args.toString() + " from " + Sys.getCwd() + "\n");
 								Sys.command(command.command, command.args);
 							}
