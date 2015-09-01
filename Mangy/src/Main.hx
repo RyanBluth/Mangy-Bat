@@ -91,19 +91,21 @@ class Main
 			Sys.println("\n*************");
 			Sys.println("* Mangy Bat *");
 			Sys.println("*************\n");
-			Sys.println("set(s)     %1 %2  - Create/update variable with name %1 and value %2 ");
-			Sys.println("go(g)      %1     - CD to the specified variable(%1)");
-			Sys.println("delete(d)  %1     - Delete the specified variable(%1)");
-			Sys.println("list(l)           - List all variables");
-			Sys.println("explore(e) %1     - Open an explorer window at the specified variable(%1)");
-			Sys.println("run(r)     %1     - Run the specfied variable - An exe for example(%1)");
-			Sys.println("chain(c)   %1     - Run a set of comma seperated commands(%1)");
-			Sys.println("\n\n");
+			Sys.println("set(s)       %1 %2  - Create/update variable with name %1 and value %2 ");
+			Sys.println("go(g)        %1     - CD to the specified variable(%1)");
+			Sys.println("delete(d)    %1     - Delete the specified variable(%1)");
+			Sys.println("list(l)             - List all variables");
+			Sys.println("explore(e)   %1     - Open an explorer window at the specified variable(%1)");
+			Sys.println("run(r)       %1     - Run the specfied variable - An exe for example(%1)");
+			Sys.println("chain(c)     %1     - Run a set of comma seperated commands(%1)");
+			Sys.println("Auto Select  %1     - If one of the above is not specified Mangy Bat will attempt to ");
+			Sys.println("                      determine the best action. If the variable is a Path go will be run,");
+			Sys.println("                      otherwise the value of the variable will be run as a chain");
 			Sys.println("-- Syntax --");
 			Sys.println("{VAR} -- Will be expanded to the value of VAR");
 			Sys.println("$1, $2, $3... -- Can be used in run/chain commands"); 
 			Sys.println("    Ex. (Creation) mangy set com \"git commit -m $1\"");
-			Sys.println("    Ex. (Usage)    mangy run com -- \"This is a message for $1\"");
+			Sys.println("    Ex. (Usage)    mangy run com - \"This is a message for $1\"");
 		}
 	}
 	
@@ -180,7 +182,7 @@ class Main
 					if (out != null) {
 						for (c in 0...out.length) {
 							if (out.charAt(c) == ',') {
-								Sys.println(prop.name + " appears to be a chain command, chain commands must be run using run_chain or rc\n");
+								Sys.println(prop.name + " appears to be a chain command, chain commands must be run using chain or c");
 								break;
 							}
 						}
@@ -376,7 +378,7 @@ class Main
 			if (extraIdx >= 0) {
 				command.extras.push(expandPropertyArg(args[i]));
 			}
-			if (extraIdx == -1 && args[i] == "--") {
+			if (extraIdx == -1 && args[i] == "-") {
 				extraIdx = i;
 			}
 		}
