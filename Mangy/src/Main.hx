@@ -1,7 +1,9 @@
 package;
 
 import cpp.Lib;
+import haxe.Log;
 import Sys;
+import sys.FileStat;
 import sys.FileSystem;
 import sys.io.File;
 import sys.io.FileOutput;
@@ -49,17 +51,19 @@ class Main
 	static inline var runChain_s:String = "c";
 	
 	static inline var propsFile:String = "props.mangy";
-	static inline var logFile:String   = "log.txt";
 	
 	static var props:PropertySet;
 	
 	static var globalCommand:Command;
+	
+	static var args:Array<String>;
 	
 	static function main() 
 	{
 		props = {
 			propsArr : new Array()
 		}	
+		
 		if(FileSystem.exists(getFilePath(propsFile))){
 			var contents:String = File.getContent(getFilePath(propsFile));
 			if(contents.length > 0){
@@ -80,180 +84,220 @@ class Main
 		
 		globalCommand = processMangyArguments(Sys.args());
 		
-		//Clear log
-		log("", true);
-		
-		var args:Array<String>;
 		args = Sys.args();
 		if (args.length > 0) {
-			
-			// fr argument sets the directory to run the command from
-			if (globalCommand.dashArgs.exists("fr")) {
-				Sys.setCwd(globalCommand.dashArgs.get("fr"));
-			}
-			
-			switch(args[0]){
-				case go | go_s:
-					if (args.length > 1) {
-						var path:String = null;
-						for (p in props.propsArr) {
-							if (p.name == args[1].toString()) {
-								path = p.value;
-								break;
-							}
-						}
-						Sys.print("cd " + path);
-					}
-				case set | set_s:
-					if (args.length > 2) {
-						var prop:Property = {
-							name  : args[1].toString(),
-							value : args[2].toString()
-						};
-						var exists:Bool = false;
-						for (p in props.propsArr) {
-							if (p.name == prop.name) {
-								p.value = prop.value;
-								exists = true;
-								break;
-							}
-						}
-						if (!exists) {
-							props.propsArr.push(prop);
-						}
-						writeProps(props);
-					}
-				case explore | explore_s:
-					if (args.length > 1) {
-						var path:String = null;
-						for (p in props.propsArr) {
-							if (p.name == args[1].toString()) {
-								path = p.value;
-								break;
-							}
-						}
-						if(path != null){
-							Sys.command("explorer", [path]);
-						}
-					}
-					
-				case list | list_s:
-					var out:String = "\n__________Items___________\n";
+			doCommand(args[0]);
+		}else {
+			Sys.println("\n*************");
+			Sys.println("* Mangy Bat *");
+			Sys.println("*************\n");
+			Sys.println("set(s)     %1 %2  - Create/update variable with name %1 and value %2 ");
+			Sys.println("go(g)      %1     - CD to the specified variable(%1)");
+			Sys.println("delete(d)  %1     - Delete the specified variable(%1)");
+			Sys.println("list(l)           - List all variables");
+			Sys.println("explore(e) %1     - Open an explorer window at the specified variable(%1)");
+			Sys.println("run(r)     %1     - Run the specfied variable - An exe for example(%1)");
+			Sys.println("chain(c)   %1     - Run a set of comma seperated commands(%1)");
+			Sys.println("\n\n");
+			Sys.println("-- Syntax --");
+			Sys.println("{VAR} -- Will be expanded to the value of VAR");
+			Sys.println("$1, $2, $3... -- Can be used in run/chain commands"); 
+			Sys.println("    Ex. (Creation) mangy set com \"git commit -m $1\"");
+			Sys.println("    Ex. (Usage)    mangy run com -- \"This is a message for $1\"");
+		}
+	}
+	
+	static function doCommand(command:String) {
+		// fr argument sets the directory to run the command from
+		if (globalCommand.dashArgs.exists("fr")) {
+			Sys.setCwd(globalCommand.dashArgs.get("fr"));
+		}
+		
+		switch(command){
+			case go | go_s:
+				if (args.length > 1) {
+					var path:String = null;
 					for (p in props.propsArr) {
-						out += p.name + " : " + p.value + "\n";
+						if (p.name == args[1].toString()) {
+							path = p.value;
+							break;
+						}
 					}
-					log(out);
+					Sys.println("cd " + path);
+				}
+			case set | set_s:
+				if (args.length > 2) {
+					var prop:Property = {
+						name  : args[1].toString(),
+						value : args[2].toString()
+					};
+					var exists:Bool = false;
+					for (p in props.propsArr) {
+						if (p.name == prop.name) {
+							p.value = prop.value;
+							exists = true;
+							break;
+						}
+					}
+					if (!exists) {
+						props.propsArr.push(prop);
+					}
+					writeProps(props);
+				}
+			case explore | explore_s:
+				if (args.length > 1) {
+					var path:String = null;
+					for (p in props.propsArr) {
+						if (p.name == args[1].toString()) {
+							path = p.value;
+							break;
+						}
+					}
+					if(path != null){
+						Sys.command("explorer", [path]);
+					}
+				}
+				
+			case list | list_s:
+				var out:String = "\n__________Items___________\n";
+				for (p in props.propsArr) {
+					out += p.name + " : " + p.value + "\n";
+				}
+				Sys.println(out);
+				
+			case run | run_s:
+				if (args.length > 1) {
+					var out:String = null;
+					var prop = null;
+					for (p in props.propsArr) {
+						if (p.name == args[1].toString()) {
+							out = p.value;
+							prop = p;
+							break;
+						}
+					}
 					
-				case run | run_s:
-					if (args.length > 1) {
-						var out:String = null;
-						var prop = null;
-						for (p in props.propsArr) {
-							if (p.name == args[1].toString()) {
-								out = p.value;
-								prop = p;
+					if (out != null) {
+						for (c in 0...out.length) {
+							if (out.charAt(c) == ',') {
+								Sys.println(prop.name + " appears to be a chain command, chain commands must be run using run_chain or rc\n");
 								break;
 							}
 						}
 						
-						if (out != null) {
-							for (c in 0...out.length) {
-								if (out.charAt(c) == ',') {
-									log(prop.name + " appears to be a chain command, chain commands must be run using run_chain or rc\n");
+						var command = processCommandArguments(out);
+														
+						for (x in 0...command.args.length) {
+							for (i in 0...globalCommand.extras.length){ 
+								command.args[x] = StringTools.replace(command.args[x], "$" + Std.string(i + 1), expandPropertyArg(globalCommand.extras[i]));
+							}
+							command.args[x] = expandPropertyArg(command.args[x]);
+						}
+						Sys.println("Running... " + command.command + " with arguments " + command.args.toString() + " from " + Sys.getCwd() + "\n");
+						Sys.command(command.command, command.args);
+					}
+				}
+				
+			case delete | delete_s:
+				if (args.length > 1) {
+					var pr:Property = null;
+					for (p in props.propsArr) {
+						if (p.name == args[1].toString()) {
+							pr = p;
+							break;
+						}
+					}
+					if (pr != null) {
+						props.propsArr.remove(pr);
+						Sys.println("Removed " + args[1] + "\n");
+						writeProps(props);
+					}
+				}
+				
+			case path | path_s:
+				if (args.length > 1) {
+					var value:String = null;
+					for (arg in args) {
+						if (arg == "-p" || arg == "-property") {
+							for (p in props.propsArr) {
+								if (p.name == args[1]) {
+									value = p.value;
 									break;
 								}
+							}	
+						}
+					}
+					
+					if (value == null) {
+						value = args[1];
+					}
+					
+					var path:String = Sys.getEnv("PATH");
+
+					if (path != null) {
+						Sys.command("setx path \"%PATH%;" + value + " /m"); 
+						Sys.command("path=%PATH%;" + value); 
+					}
+					
+					Sys.println(Sys.getEnv("PATH") + "\n");
+				}
+				
+			/**
+			 * Possible Arguments 
+			 * 
+			 * -fr = Which directoty to run from
+			 */	
+			case runChain | runChain_s:
+				if (args.length > 1) {
+					var out:String = null;
+					
+					for (p in props.propsArr) {
+						if (p.name == args[1].toString()) {
+							out = p.value;
+							break;
+						}
+					}
+					
+					var vals:Array<String> = out.split(",");
+					
+					for (val in vals) {
+						
+						var command:Command = processCommandArguments(val);
+						
+						for (x in 0...command.args.length) {
+							for (i in 0...globalCommand.extras.length) {
+								command.args[x] = StringTools.replace(command.args[x], "$" + Std.string(i + 1), expandPropertyArg(globalCommand.extras[i]));
 							}
-							
-							var command = processCommandArguments(out);
-							
-							log("Running... " + command.command + " with arguments " + command.args.toString() + " from " + Sys.getCwd() + "\n");
+							command.args[x] = expandPropertyArg(command.args[x]);
+						}
+						
+						if (command != null) { 
+							Sys.println("Running... " + command.command + " with arguments " + command.args.toString() + " from " + Sys.getCwd() + "\n");
 							Sys.command(command.command, command.args);
 						}
 					}
-					
-				case delete | delete_s:
-					if (args.length > 1) {
-						var pr:Property = null;
-						for (p in props.propsArr) {
-							if (p.name == args[1].toString()) {
-								pr = p;
-								break;
-							}
-						}
-						if (pr != null) {
-							props.propsArr.remove(pr);
-							log("Removed " + args[1] + "\n");
-							writeProps(props);
-						}
+				}else {
+					Sys.println("Invalid number of arguments\n");
+				}
+			
+			default:
+				var matched = false;
+				for (p in props.propsArr) {
+					if (p != null && p.name == command) {
+						command = p.value;
+						matched = true;
+						break;
 					}
-					
-				case path | path_s:
-					if (args.length > 1) {
-						var value:String = null;
-						for (arg in args) {
-							if (arg == "-p" || arg == "-property") {
-								for (p in props.propsArr) {
-									if (p.name == args[1]) {
-										value = p.value;
-										break;
-									}
-								}	
-							}
-						}
-						
-						if (value == null) {
-							value = args[1];
-						}
-						
-						var path:String = Sys.getEnv("PATH");
-
-						if (path != null) {
-							Sys.command("setx path \"%PATH%;" + value + " /m"); 
-							Sys.command("path=%PATH%;" + value); 
-						}
-						
-						log(Sys.getEnv("PATH") + "\n");
-					}
-					
-				/**
-				 * Possible Arguments 
-				 * 
-				 * -fr = Which directoty to run from
-				 */	
-				case runChain | runChain_s:
-					if (args.length > 1) {
-						var out:String = null;
-						
-						for (p in props.propsArr) {
-							if (p.name == args[1].toString()) {
-								out = p.value;
-								break;
-							}
-						}
-						
-						var vals:Array<String> = out.split(",");
-						
-						for (val in vals) {
-							
-							var command = processCommandArguments(val);
-							
-							for (x in 0...command.args.length) {
-								for (i in 0...globalCommand.extras.length) {
-									command.args[x] = StringTools.replace(command.args[x], "$" + Std.string(i + 1), expandPropertyArg(globalCommand.extras[i]));
-								}
-							}
-							
-							if (command != null) { 
-								log("Running... " + command.command + " with arguments " + command.args.toString() + " from " + Sys.getCwd() + "\n");
-								Sys.command(command.command, command.args);
-							}
-						}
+				}
+				if (matched) {
+					if (FileSystem.exists(command)) {
+						args.unshift(go);
+						doCommand(go);
 					}else {
-						log("Invalid number of arguments\n");
+						args.unshift(runChain);
+						doCommand(runChain);
 					}
-			}
-		}else {
-			Sys.println("Argument expected.");
+				}
 		}
 	}
 	
@@ -265,21 +309,6 @@ class Main
 		}
 		path += file;
 		return path;
-	}
-	
-	static function log(content:String, clear:Bool = false) {		
-		var file:FileOutput = null;
-		if(clear){
-			file = File.write(getFilePath(logFile), false);
-		}else {
-			file = File.append(getFilePath(logFile), false);
-		}
-		file.writeString(content);
-		file.close();
-	}
-	
-	static function logLine(content:String, clear:Bool = false) {
-		log(content + "\n", clear);
 	}
 	
 	static function writeProps(props:PropertySet) {
@@ -431,7 +460,7 @@ class Main
 						outArg += vas[i];
 					}
 					if (!matched) {
-						logLine("Could not expand " + arg);
+						Sys.println("Could not expand " + arg);
 					}
 				}else {
 					outArg += va;
