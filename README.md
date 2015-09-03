@@ -17,7 +17,7 @@ This is useful when building chain commands. For example if a chain command were
 m s copy_ex "copy {x}/file.txt {y}/file.txt, copy {x}/file.txt {z}/file.txt"
 ```
 
-###The -- Syntax
+###The - Syntax
 
 It is possible to pass arguments into commands. These arguments are denoted by entering -- and then declaring the arguments. For example if a chain command is created we may want to use it multiple times with some variation.
 Referring back to the example in the previous section we may re-write our copy chain command to 
