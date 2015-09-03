@@ -19,14 +19,14 @@ m s copy_ex "copy {x}/file.txt {y}/file.txt, copy {x}/file.txt {z}/file.txt"
 
 ###The - Syntax
 
-It is possible to pass arguments into commands. These arguments are denoted by entering -- and then declaring the arguments. For example if a chain command is created we may want to use it multiple times with some variation.
+It is possible to pass arguments into commands. These arguments are denoted by entering - and then declaring the arguments. For example if a chain command is created we may want to use it multiple times with some variation.
 Referring back to the example in the previous section we may re-write our copy chain command to 
 ```
 m s copy_ex "copy $1 $2 $3"
 ```
 We could then run the command like so 
 ```
-m c copy_ex -- {x}/file.txt {y}/file.txt {z}/file.txt
+m c copy_ex - {x}/file.txt {y}/file.txt {z}/file.txt
 ```
 While this isn't a great example it shows how arguments can add flexability to commands. It also shows a better use of the {KEY} syntax
 
