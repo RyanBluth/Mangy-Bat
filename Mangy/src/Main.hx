@@ -161,11 +161,39 @@ class Main
 				}
 				
 			case list | list_s:
-				var out:String = "\n__________Items___________\n";
+				
+				var longest:Int = 0;
+				var paths:Array<Dynamic> = [];
+				var others:Array<Dynamic> = [];
+				var pathsString:String = "";
+				var othersString:String = "";
+				Sys.println("\n__________Paths___________\n");
 				for (p in props.propsArr) {
-					out += p.name + " : " + p.value + "\n";
+					if (p.name.length > longest) {
+						longest = p.name.length;
+					}
+					if(FileSystem.exists(p.value)){
+						paths.push( { name:p.name,  value:p.value} );
+					}else {
+						others.push( { name:p.name,  value:p.value } ); 
+					}
 				}
-				Sys.println(out);
+				
+				for (val in paths) {
+					var str:String = val.name;
+					for (i in 0...cast((longest - val.name.length), Int)) {
+						str += " ";
+					}
+					Sys.println(str + " : " + val.value);
+				}
+				Sys.println("\n__________Commands___________\n");
+				for (val in others) {
+					var str:String = val.name;
+					for (i in 0...cast((longest - val.name.length), Int)) {
+						str += " ";
+					}
+					Sys.println(str + " : " + val.value);
+				}
 				
 			case run | run_s:
 				if (args.length > 1) {
