@@ -14,7 +14,7 @@ mangy set exProj C:\Projects\example\src
 It is possible to use the {KEY} syntax to reference a set value. For example if the value of x is "C:\Stuff\Z\Y\X" then {x} would be expanded to C:\Stuff\Z\Y\X
 This is useful when building chain commands. For example if a chain command were being written to copy a file to a couple common locations it would be easy to write
 ```
-m s copy_ex "copy {x}/file.txt {y}/file.txt, copy {x}/file.txt {z}/file.txt"
+mangy set copy_ex "copy {x}/file.txt {y}/file.txt, copy {x}/file.txt {z}/file.txt"
 ```
 
 ###The - Syntax
@@ -22,11 +22,11 @@ m s copy_ex "copy {x}/file.txt {y}/file.txt, copy {x}/file.txt {z}/file.txt"
 It is possible to pass arguments into commands. These arguments are denoted by entering - and then declaring the arguments. For example if a chain command is created we may want to use it multiple times with some variation.
 Referring back to the example in the previous section we may re-write our copy chain command to 
 ```
-m s copy_ex "copy $1 $2 $3"
+mangy set copy_ex "copy $1 $2 $1 $3"
 ```
 We could then run the command like so 
 ```
-m c copy_ex - {x}/file.txt {y}/file.txt {z}/file.txt
+mangy chain copy_ex - {x}/file.txt {y}/file.txt {z}/file.txt
 ```
 While this isn't a great example it shows how arguments can add flexability to commands. It also shows a better use of the {KEY} syntax
 
