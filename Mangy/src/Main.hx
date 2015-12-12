@@ -58,8 +58,11 @@ class Main
 	
 	static var args:Array<String>;
 	
+	static var currentPath:String;
+	
 	static function main() 
 	{
+		
 		props = {
 			propsArr : new Array()
 		}	
@@ -85,7 +88,10 @@ class Main
 		globalCommand = processMangyArguments(Sys.args());
 		
 		args = Sys.args();
-		if (args.length > 0) {
+		if (args.length > 1) {
+			currentPath = args[0];
+			Sys.setCwd(currentPath);
+			args.shift();
 			doCommand(args[0]);
 		}else {
 			Sys.println("\n*************");
