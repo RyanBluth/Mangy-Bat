@@ -45,10 +45,6 @@ class Main
 	static inline var run_s:String      = "r"; 
 	static inline var delete:String     = "delete"; 
 	static inline var delete_s:String   = "d"; 
-	static inline var path:String       = "path";
-	static inline var path_s:String     = "p"; 
-	static inline var runChain:String   = "chain";
-	static inline var runChain_s:String = "c";
 	
 	static inline var propsFile:String = "props.mangy";
 	
@@ -103,13 +99,12 @@ class Main
 			Sys.println("list(l)             - List all variables");
 			Sys.println("explore(e)   %1     - Open an explorer window at the specified variable(%1)");
 			Sys.println("run(r)       %1     - Run the specfied variable - An exe for example(%1)");
-			Sys.println("chain(c)     %1     - Run a set of comma seperated commands(%1)");
 			Sys.println("Auto Select  %1     - If one of the above is not specified Mangy Bat will attempt to ");
 			Sys.println("                      determine the best action. If the variable is a Path go will be run,");
-			Sys.println("                      otherwise the value of the variable will be run as a chain");
+			Sys.println("                      otherwise the value of the variable will be run");
 			Sys.println("-- Syntax --");
 			Sys.println("{VAR} -- Will be expanded to the value of VAR");
-			Sys.println("$1, $2, $3... -- Can be used in run/chain commands"); 
+			Sys.println("$1, $2, $3... -- Can be used in run commands"); 
 			Sys.println("    Ex. (Creation) mangy set com \"git commit -m $1\"");
 			Sys.println("    Ex. (Usage)    mangy run com - \"This is a message for $1\"");
 		}
@@ -201,39 +196,6 @@ class Main
 					Sys.println(str + " : " + val.value);
 				}
 				
-			case run | run_s:
-				if (args.length > 1) {
-					var out:String = null;
-					var prop = null;
-					for (p in props.propsArr) {
-						if (p.name == args[1].toString()) {
-							out = p.value;
-							prop = p;
-							break;
-						}
-					}
-					
-					if (out != null) {
-						for (c in 0...out.length) {
-							if (out.charAt(c) == ',') {
-								Sys.println(prop.name + " appears to be a chain command, chain commands must be run using chain or c");
-								break;
-							}
-						}
-						
-						var command = processCommandArguments(out);
-														
-						for (x in 0...command.args.length) {
-							for (i in 0...globalCommand.extras.length){ 
-								command.args[x] = StringTools.replace(command.args[x], "$" + Std.string(i + 1), expandPropertyArg(globalCommand.extras[i]));
-							}
-							command.args[x] = expandPropertyArg(command.args[x]);
-						}
-						Sys.println("Running... " + command.command + " with arguments " + command.args.toString() + " from " + Sys.getCwd() + "\n");
-						Sys.command(command.command, command.args);
-					}
-				}
-				
 			case delete | delete_s:
 				if (args.length > 1) {
 					var pr:Property = null;
@@ -248,42 +210,9 @@ class Main
 						Sys.println("Removed " + args[1] + "\n");
 						writeProps(props);
 					}
-				}
+				}			
 				
-			case path | path_s:
-				if (args.length > 1) {
-					var value:String = null;
-					for (arg in args) {
-						if (arg == "-p" || arg == "-property") {
-							for (p in props.propsArr) {
-								if (p.name == args[1]) {
-									value = p.value;
-									break;
-								}
-							}	
-						}
-					}
-					
-					if (value == null) {
-						value = args[1];
-					}
-					
-					var path:String = Sys.getEnv("PATH");
-
-					if (path != null) {
-						Sys.command("setx path \"%PATH%;" + value + " /m"); 
-						Sys.command("path=%PATH%;" + value); 
-					}
-					
-					Sys.println(Sys.getEnv("PATH") + "\n");
-				}
-				
-			/**
-			 * Possible Arguments 
-			 * 
-			 * -fr = Which directoty to run from
-			 */	
-			case runChain | runChain_s:
+			case run | run_s:
 				if (args.length > 1) {
 					var out:String = null;
 					
@@ -330,8 +259,8 @@ class Main
 						args.unshift(go);
 						doCommand(go);
 					}else {
-						args.unshift(runChain);
-						doCommand(runChain);
+						args.unshift(run);
+						doCommand(run);
 					}
 				}
 		}
@@ -508,30 +437,5 @@ class Main
 		}else{
 			return arg;
 		}
-	}
-	
-	/**
-	 * Converts a command object back into an array of arguments 
-	 * 
-	 * @param	command The command object to convert
-	 * @return The converted array
-	 */
-	static function commandToArrayArgs(command:Command):Array<String> {
-		var args:Array<String> = [];
-		if(command.command != null){
-			args.push(command.command);
-		}
-		if(command.args != null){
-			for (x in command.args) {
-				args.push(x);
-			}
-		}
-		if(command.dashArgs != null){
-			for (x in command.dashArgs.keys()) {
-				args.push("-" + x);
-				args.push(command.dashArgs.get(x));
-			}
-		}
-		return args;
 	}
 }
