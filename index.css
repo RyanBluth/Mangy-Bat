@@ -1,0 +1,60 @@
+html{
+	width: 100%;
+	background-color: #fff;
+	padding: 0;
+}
+
+body{
+	width: 100%;
+	padding: 0;
+}
+
+hr{
+	width : 80%;
+	padding-top: 10px;
+	padding-bottom: 10px;
+}
+
+h2{
+	font-weight: 100; 
+	color : #444444;		
+}
+
+h1{
+	font-weight: 100; 
+	color : #444;		
+}
+
+.logo-container{
+	width: 100%;
+	padding-top: 60px;
+	padding-bottom: 20px;	
+	background-color: #fff;
+}
+
+.logo-img{
+	margin-right: auto;
+	margin-left: auto;
+	display: block;
+	width: 300px;
+	height: auto;
+}
+
+
+.main-title{
+	display: block;
+	text-align: center;
+	width: 100%;
+	background-color: #fff;
+}
+
+.main-content{
+	padding-bottom: 100px;
+}
+
+.github-logo{
+	width:75px;
+	height:auto;
+	float: right;
+	padding: 15px;
+}

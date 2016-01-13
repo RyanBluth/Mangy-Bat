@@ -1,0 +1,102 @@
+<html>
+<head>
+	<title>Mangy Bat</title>
+	<link href='http://fonts.googleapis.com/css?family=Abel' rel='stylesheet' type='text/css'>	
+	<link rel="stylesheet" type="text/css" href="bootstrap/css/bootstrap.css">
+	<link rel="stylesheet" type="text/css" href="index.css">
+	<href href="favicon.ico">
+</head>
+<body>
+	<a href="#"><img class="github-logo" src="hub.png"/></a>
+	<br/>
+	<div class="logo-container">
+		<img class="logo-img" src="logo.png"/>
+	</div>	
+	<div class="main-container">
+		<div class="main-title">
+			<h2>Making the command line quicker</h2>
+		</div>
+		<div class="container container-fluid main-content">
+			<hr/>	
+			<h2>Usage</h2>
+
+			<p>Mangy bat allows quick navigation through PATH-like variables.<p> 
+
+			<p>For example to add a path to C:\Projects\example\src simply run</p> 
+			
+			<code>mangy set exProj C:\Projects\example\src </code>
+			
+			<h3>The <code>{KEY}</code> Syntax</h3>
+
+			<p>It is possible to use the <code>{KEY}</code> syntax to reference a set value. For example if the value of <code>x</code> is <code>"C:\Stuff\Z\Y\X"</code> then <code>{x}</code> would be expanded to <code>C:\Stuff\Z\Y\X</code>
+			This is useful when building chain commands. For example if a chain command were being written to copy a file to a couple common locations it would be easy to write</p>
+			
+			<code>mangy set copy_ex "copy {x}/file.txt {y}/file.txt, copy {x}/file.txt {z}/file.txt"</code>
+
+			<h3>The <code>-</code> Syntax</h3>
+
+			<p>
+				It is possible to pass arguments into commands. These arguments are denoted by entering - and then declaring the arguments. For example if a chain command is created we may want to use it multiple times with some variation.
+				Referring back to the example in the previous section we may re-write our copy chain command to 
+			</p>
+			<code>
+				mangy set copy_ex "copy $1 $2, copy $1 $3"
+			</code>
+			<br/>
+			<br/>
+			<p>
+				We could then run the command like so 
+			</p>
+			<code>
+				mangy run copy_ex - {x}/file.txt {y}/file.txt {z}/file.txt
+			</code>
+			<br/>
+			<br/>
+			<p>
+				While this isn't a great example it shows how arguments can add flexability to commands. It also shows a better use of the <code>{KEY}</code> syntax
+			</p>
+			<h3>
+				Commands
+			</h3>	
+
+			<b>Each command has a short form. This is contained within () in the table below</b>
+			<b>For example the short form of <code>set</code> is <code>s</code></b>
+
+			<table class="table table-striped">
+				<thead>
+					<tr>
+						<th>Command</th>
+						<th>Result</th>
+					</tr>
+				</thead>
+				<tbody>
+					<tr>
+						<td><code>set(s) %1  %2</code></td>
+						<td>Sets variable with name <code>%1</code> to value <code>%2</code> </td>
+					</tr>
+					<tr>
+						<td><code>explore(e) %1</code></td>
+						<td>Opens an explorer window to the location of <code>%1</code>'s value</td>
+					</tr>
+					<tr>
+						<td><code>delete(d) %1</code></td>
+						<td>Deletes the variable <code>%1</code></td>
+					</tr>
+					<tr>
+						<td><code>go(g) %1</code></td>
+						<td>CDs to the value of <code>%1</code></td>
+					</tr>
+					<tr>
+						<td><code>list(l)</code></td>
+						<td>Lists all variables</td>
+					</tr>
+					<tr>
+						<td><code>run(r) %1</code></td>
+						<td>Used to run a command or a chain of comma seperated commands(The value of <code>%1</code> wiil be run). These commands can be set using the set command. For example a command to add all changes in git and then commit them might look like <code>mangy set git_C "git add --all, git commit -m $1"</code>. It would then be run like so <code>mangy run git_c - "This is a message for $1"</code>. NOTE the run command accepts the -fr flag which specifies which directory to run the commands from. You may take advantage of the <code>{key}</code> syntax to make this more efficent. For example if I had a key value pair of <code>ma = C:\Projects\MangyBat</code> and wanted to run <code>git_c</code> in that directory I could run the command as follows <code>mangy run git_c -fr {ma} - "This is a message for $1"</code>. <code>{ma}</code> will be expanded to C:\Projects\MangyBat. </td>
+					</tr>
+				</tbody>
+			</table>
+		</div>
+	</div>
+</body>
+</html>
