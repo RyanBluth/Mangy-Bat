@@ -234,6 +234,8 @@ class Main
 								command.args[x] = StringTools.replace(command.args[x], "$" + Std.string(i + 1), expandPropertyArg(globalCommand.extras[i]));
 							}
 							command.args[x] = expandPropertyArg(command.args[x]);
+							command.args[x] = StringTools.replace(command.args[x], "'", "");
+							command.args[x] = StringTools.replace(command.args[x], '"', "");
 						}
 						
 						if (command != null) { 
