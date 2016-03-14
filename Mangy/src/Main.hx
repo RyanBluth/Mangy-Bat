@@ -134,6 +134,9 @@ class Main
 						name  : args[1].toString(),
 						value : args[2].toString()
 					};
+					if (prop.value.toLowerCase() == "here") {
+						prop.value = currentPath;
+					}
 					var exists:Bool = false;
 					for (p in props.propsArr) {
 						if (p.name == prop.name) {
@@ -150,10 +153,14 @@ class Main
 			case explore | explore_s:
 				if (args.length > 1) {
 					var path:String = null;
-					for (p in props.propsArr) {
-						if (p.name == args[1].toString()) {
-							path = p.value;
-							break;
+					if (args[1].toLowerCase() == "here") {
+						path = currentPath;
+					}else{
+						for (p in props.propsArr) {
+							if (p.name == args[1].toString()) {
+								path = p.value;
+								break;
+							}
 						}
 					}
 					if(path != null){
