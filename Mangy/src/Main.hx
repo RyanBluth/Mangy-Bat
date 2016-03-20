@@ -245,6 +245,9 @@ class Main
 							command.args[x] = StringTools.replace(command.args[x], '"', "");
 						}
 						
+						command.command = StringTools.replace(command.command, "'", "");
+						command.command = StringTools.replace(command.command, '"', "");
+						
 						if (command != null) { 
 							Sys.println("Running... " + command.command + " with arguments " + command.args.toString() + " from " + Sys.getCwd() + "\n");
 							Sys.command(command.command, command.args);
