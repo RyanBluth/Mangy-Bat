@@ -126,7 +126,7 @@ class Main
 							break;
 						}
 					}
-					Sys.println("cd " + path);
+					Sys.println("cd /D " + path);
 				}
 			case set | set_s:
 				if (args.length > 2) {
